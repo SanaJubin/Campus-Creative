@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookie from 'js-cookie';
 import { auth } from './auth';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = 'https://SanaJubin.pythonanywhere.com/api';
 
 // Create axios instance
 const api = axios.create({

@@ -7,7 +7,7 @@ export const auth = {
     try {
       console.log('🔄 Sending login to backend...', credentials);
       
-      const response = await axios.post('http://127.0.0.1:8000/api/auth/token/', credentials);
+      const response = await axios.post('https://SanaJubin.pythonanywhere.com/api/auth/token/', credentials);
       
       console.log('✅ Login successful!', response.data);
       const { access, refresh } = response.data;
@@ -39,7 +39,7 @@ export const auth = {
       }
 
       console.log('🔄 Refreshing token...');
-      const response = await axios.post('http://127.0.0.1:8000/api/auth/token/refresh/', {
+      const response = await axios.post('https://SanaJubin.pythonanywhere.com/api/auth/token/refresh/', {
         refresh: refreshToken
       });
 
