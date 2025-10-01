@@ -38,8 +38,6 @@ class PostSerializer(serializers.ModelSerializer):
                 representation['image'] = request.build_absolute_uri(instance.image.url)
             else:
                 representation['image'] = instance.image.url
-        else:
-            representation['image'] = None
         return representation
 
     def create(self, validated_data):

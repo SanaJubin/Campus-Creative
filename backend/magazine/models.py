@@ -4,7 +4,8 @@ import os
 import uuid  # Add this import
 
 def post_image_path(instance, filename):
-    return f'posts/user_{instance.author.user.id}/{filename}'
+    # Simple path without user folders
+    return f'posts/{filename}'
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
