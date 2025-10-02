@@ -203,7 +203,7 @@ const handleSubmit = async (e) => {
   const postTypeOptions = [
     { value: 'art', label: '🎨 Art', color: 'from-pink-500 to-red-500' },
     { value: 'writing', label: '📝 Writing', color: 'from-green-500 to-teal-500' },
-    { value: 'photo', label: '📸 Photography', color: 'from-blue-500 to-cyan-500' },
+    { value: 'photography', label: '📸 Photography', color: 'from-blue-500 to-cyan-500' },
     { value: 'other', label: '💫 Other', color: 'from-purple-500 to-indigo-500' }
   ];
 

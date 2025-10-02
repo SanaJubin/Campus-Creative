@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Layout from '../components/Layout';
-import FilterSort from '../components/FilterSort'; // Add this import
-import { getPosts } from '../utils/api';
+import FilterSort from '../components/FilterSort';
+import { getPosts, getComments, api } from '../utils/api';
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -13,15 +13,30 @@ export default function Home() {
     post_type: 'all',
     sort: 'newest'
   });
-
+  const [expandedPostId, setExpandedPostId] = useState(null);
+  const [comments, setComments] = useState({});
+  const [commentsLoading, setCommentsLoading] = useState({});
+  
   useEffect(() => {
     fetchPosts();
   }, []);
 
   useEffect(() => {
-    // Apply filters and sorting whenever posts or filters change
     applyFiltersAndSorting();
   }, [posts, filters]);
+
+  // Fix post type mapping
+  const getPostTypeDisplay = (postType) => {
+    const typeMap = {
+      'art': 'art',
+      'writing': 'writing', 
+      'photography': 'photography',
+      'photo': 'photography',  // Map old 'photo' to 'photography'
+      'music': 'music',
+      'other': 'other'
+    };
+    return typeMap[postType] || 'other';
+  };
 
   const fetchPosts = async () => {
     try {
@@ -46,6 +61,17 @@ export default function Home() {
           comments_count: 8,
           created_at: new Date().toISOString(),
           image: null
+        },
+        {
+          id: 2,
+          title: 'Amazing Campus Sunset',
+          content: 'Captured this beautiful sunset near the library yesterday!',
+          post_type: 'photography',
+          author_name: 'Photo Student',
+          likes_count: 15,
+          comments_count: 3,
+          created_at: new Date().toISOString(),
+          image: null
         }
       ];
       setPosts(demoPosts);
@@ -54,12 +80,89 @@ export default function Home() {
     }
   };
 
+  const fetchComments = async (postId, forceRefresh = false) => {
+    try {
+      console.log('🔄 Fetching comments for post:', postId);
+      setCommentsLoading(prev => ({ ...prev, [postId]: true }));
+      
+      // Force fresh data from server (don't use cache)
+      const response = await api.get(`/posts/${postId}/comments/`, {
+        params: {
+          _t: forceRefresh ? Date.now() : 0 // Add timestamp to avoid cache
+        }
+      });
+      
+      console.log('✅ Comments loaded:', response.data.length, 'comments');
+      setComments(prev => ({
+        ...prev,
+        [postId]: response.data
+      }));
+      
+    } catch (error) {
+      console.error('❌ Error fetching comments:', error);
+      
+      // Check if this post has comments in the post data itself
+      const post = posts.find(p => p.id === postId);
+      
+      if (post && post.comments) {
+        // Use comments from post data
+        setComments(prev => ({
+          ...prev,
+          [postId]: post.comments
+        }));
+      } else {
+        // Fallback to demo comments
+        const demoComments = [
+          {
+            id: Date.now(),
+            post: postId,
+            author_name: 'Campus Fan',
+            content: 'This is amazing work! Keep creating! 🎨',
+            created_at: new Date().toISOString()
+          },
+          {
+            id: Date.now() + 1,
+            post: postId,
+            author_name: 'Art Lover',
+            content: 'Love the creativity in this post!',
+            created_at: new Date(Date.now() - 86400000).toISOString()
+          }
+        ];
+        
+        setComments(prev => ({
+          ...prev,
+          [postId]: demoComments
+        }));
+      }
+    } finally {
+      setCommentsLoading(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const refreshComments = async (postId) => {
+    console.log('🔄 Manually refreshing comments for post:', postId);
+    await fetchComments(postId, true); // Force refresh
+  };
+
+  const toggleComments = async (postId) => {
+    if (expandedPostId === postId) {
+      setExpandedPostId(null);
+    } else {
+      setExpandedPostId(postId);
+      if (!comments[postId]) {
+        await fetchComments(postId);
+      }
+    }
+  };
+
   const applyFiltersAndSorting = () => {
     let result = [...posts];
 
-    // Apply type filter
+    // Apply type filter with fixed mapping
     if (filters.post_type !== 'all') {
-      result = result.filter(post => post.post_type === filters.post_type);
+      result = result.filter(post => 
+        getPostTypeDisplay(post.post_type) === filters.post_type
+      );
     }
 
     // Apply sorting
@@ -204,13 +307,13 @@ export default function Home() {
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          post.post_type === 'art' ? 'bg-pink-100 text-pink-800' :
-                          post.post_type === 'writing' ? 'bg-green-100 text-green-800' :
-                          post.post_type === 'photography' ? 'bg-blue-100 text-blue-800' :
-                          post.post_type === 'music' ? 'bg-yellow-100 text-yellow-800' :
+                          getPostTypeDisplay(post.post_type) === 'art' ? 'bg-pink-100 text-pink-800' :
+                          getPostTypeDisplay(post.post_type) === 'writing' ? 'bg-green-100 text-green-800' :
+                          getPostTypeDisplay(post.post_type) === 'photography' ? 'bg-blue-100 text-blue-800' :
+                          getPostTypeDisplay(post.post_type) === 'music' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-purple-100 text-purple-800'
                         }`}>
-                          {post.post_type}
+                          {getPostTypeDisplay(post.post_type)}
                         </span>
                         <span className="text-sm text-gray-500">
                           {new Date(post.created_at).toLocaleDateString()}
@@ -227,12 +330,91 @@ export default function Home() {
                           <span>💬 {post.comments_count || 0}</span>
                         </div>
                       </div>
+
+                      {/* Comments Section */}
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <button 
+                            onClick={() => toggleComments(post.id)}
+                            className="flex items-center gap-1 text-blue-600 text-sm hover:text-blue-700 font-medium"
+                          >
+                            <span>💬</span>
+                            {expandedPostId === post.id ? 'Hide' : 'Show'} Comments 
+                            {post.comments_count > 0 && ` (${post.comments_count})`}
+                          </button>
+                          
+                          {expandedPostId === post.id && comments[post.id] && (
+                            <button 
+                              onClick={() => refreshComments(post.id)}
+                              className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                              title="Refresh comments"
+                            >
+                              🔄 Refresh
+                            </button>
+                          )}
+                        </div>
+                        
+                        {expandedPostId === post.id && (
+                          <div className="mt-3 border-t pt-3">
+                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                              <span>💭</span>
+                              Comments ({comments[post.id] ? comments[post.id].length : 0})
+                            </h4>
+                            
+                            {commentsLoading[post.id] ? (
+                              // Loading state
+                              <div className="flex justify-center py-4">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                              </div>
+                            ) : !comments[post.id] ? (
+                              // Not loaded yet
+                              <div className="text-center py-4">
+                                <p className="text-gray-500 text-sm">Click refresh to load comments</p>
+                              </div>
+                            ) : comments[post.id].length === 0 ? (
+                              // No comments
+                              <div className="text-center py-4 bg-gray-50 rounded-lg">
+                                <div className="text-2xl mb-2">💬</div>
+                                <p className="text-gray-500 text-sm">No comments yet.</p>
+                                <p className="text-gray-400 text-xs mt-1">Be the first to comment!</p>
+                              </div>
+                            ) : (
+                              // Display comments
+                              <div className="space-y-3 max-h-48 overflow-y-auto scrollbar-thin pr-2">
+                                {comments[post.id].map((comment) => (
+                                  <div key={comment.id || comment.content} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <div className="flex justify-between items-start mb-1">
+                                      <span className="font-medium text-gray-800 text-sm">
+                                        {comment.author_name}
+                                      </span>
+                                      <span className="text-gray-500 text-xs">
+                                        {new Date(comment.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-700 text-sm">{comment.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* Add Comment Button */}
+                            <button 
+                              onClick={() => {
+                                window.location.href = `/posts/${post.id}`;
+                              }}
+                              className="mt-3 w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg hover:shadow-lg transition-all duration-200 text-sm font-medium"
+                            >
+                              + Add Your Comment
+                            </button>
+                          </div>
+                        )}
+                      </div>
                       
                       <button 
                         onClick={() => window.location.href = `/posts/${post.id}`}
                         className="w-full mt-4 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
                       >
-                        View Post
+                        View Full Post
                       </button>
                     </div>
                   </div>

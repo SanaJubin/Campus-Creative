@@ -100,6 +100,7 @@ export const apiService = {
 export const getPost = (id) => api.get(`/posts/${id}/`);
 export const likePost = (id) => api.post(`/posts/${id}/like/`);
 export const commentOnPost = (id, data) => api.post(`/posts/${id}/comment/`, data);
+export const getComments = (postId) => api.get(`/posts/${postId}/comments/`); // ✅ ADDED THIS LINE
 export const getPosts = () => api.get('/posts/');
 export const createPost = (data) => api.post('/posts/', data);
 export const deletePost = (id) => api.delete(`/posts/${id}/`);
