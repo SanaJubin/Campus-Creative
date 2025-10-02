@@ -95,7 +95,7 @@ const handleSubmit = async (e) => {
     }
 
     console.log('🚀 Sending POST request...');
-    const response = await fetch('https://SanaJubin.pythonanywhere.com/api/posts/', {
+    const response = await fetch('https://SanaJubin.pythonanywhere.com/api/posts/',{
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

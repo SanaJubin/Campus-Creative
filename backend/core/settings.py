@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-from decouple import config # Add this import
+from decouple import config 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -11,9 +11,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-SECRET_KEY = config('SECRET_KEY', default='your-default-secret-key')
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+SECRET_KEY = 'your-secret-key-for-production-12345'
+DEBUG = False
+ALLOWED_HOSTS = ['sanajubin.pythonanywhere.com', 'SanaJubin.pythonanywhere.com', 'localhost', '127.0.0.1']
 
 
 INSTALLED_APPS = [
@@ -93,9 +93,10 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://campus-creative.vercel.app/"
+    "https://campus-creative.vercel.app",
+    "https://sanajubin.pythonanywhere.com",
+    "https://SanaJubin.pythonanywhere.com"
 ]
-
 # Allow all methods and headers
 CORS_ALLOW_METHODS = [
     'DELETE',
