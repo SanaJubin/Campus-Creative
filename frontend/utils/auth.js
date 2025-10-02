@@ -1,13 +1,13 @@
 import { api } from './api';
 import Cookie from 'js-cookie';
-import axios from 'axios';
 
 export const auth = {
   login: async (credentials) => {
     try {
       console.log('🔄 Sending login to backend...', credentials);
       
-      const response = await axios.post('https://SanaJubin.pythonanywhere.com/api/auth/token/', credentials);
+      // Use the configured api instance instead of axios directly
+      const response = await api.post('/auth/token/', credentials);
       
       console.log('✅ Login successful!', response.data);
       const { access, refresh } = response.data;
@@ -39,7 +39,7 @@ export const auth = {
       }
 
       console.log('🔄 Refreshing token...');
-      const response = await axios.post('https://SanaJubin.pythonanywhere.com/api/auth/token/refresh/', {
+      const response = await api.post('/auth/token/refresh/', {
         refresh: refreshToken
       });
 
